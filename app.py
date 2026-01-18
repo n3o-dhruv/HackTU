@@ -52,6 +52,8 @@ with st.expander("🧪 DEBUG INFO (Open this first)"):
     has_old = pkgutil.find_loader("google.generativeai") is not None
     has_new = pkgutil.find_loader("google.genai") is not None
 
+    import subprocess
+
     st.write("🔎 Installed Packages Check")
     st.write("• Has OLD SDK (google.generativeai)?", has_old)
     st.write("• Has NEW SDK (google.genai)?", has_new)
@@ -61,6 +63,16 @@ with st.expander("🧪 DEBUG INFO (Open this first)"):
         st.info("Fix: remove google-generativeai from requirements.txt and clear cache/rebuild.")
     else:
         st.success("✅ OLD SDK not detected (good).")
+        
+        import subprocess
+
+with st.expander("🧨 FULL PACKAGE DEBUG"):
+    try:
+        out = subprocess.check_output(["python", "-m", "pip", "freeze"]).decode()
+        st.text(out)
+    except Exception as e:
+        st.write("pip freeze failed:", e)
+
 
 # ---------------- API SETUP ----------------
 api_key = st.secrets.get("GOOGLE_API_KEY", None) or os.getenv("GOOGLE_API_KEY")
