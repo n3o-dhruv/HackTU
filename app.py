@@ -1,3 +1,4 @@
+st.write("SDK CHECK:", genai.__file__)
 import streamlit as st
 from PIL import Image
 from google import genai
