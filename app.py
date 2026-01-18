@@ -1,4 +1,3 @@
-st.write("SDK CHECK:", genai.__file__)
 import streamlit as st
 from PIL import Image
 from google import genai
@@ -94,4 +93,7 @@ with col2:
             st.balloons()
     else:
         st.info("Awaiting product scan. Upload an image to start.")
+
+st.write("SDK CHECK:", genai.__file__)
+
 
