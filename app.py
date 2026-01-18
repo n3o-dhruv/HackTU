@@ -1,86 +1,92 @@
 import streamlit as st
+import google.generativeai as genai
 from PIL import Image
-import time
+import os
 
-# --- UI CONFIGURATION ---
+# --- INITIAL SETUP ---
+# Replace with your actual API Key
+os.environ["GOOGLE_API_KEY"] = "YOUR_GEMINI_API_KEY"
+genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
+model = genai.GenerativeModel('gemini-1.5-flash')
+
+# --- CRAZY UI STYLING ---
 st.set_page_config(page_title="PostMortem AI", layout="wide")
 
-# Custom CSS for the "Clinical Neon" Look
 st.markdown("""
     <style>
-    .main { background-color: #0e1117; color: #00ffcc; }
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+    
+    .main { background-color: #060a0f; color: #00f2ff; font-family: 'Orbitron', sans-serif; }
+    .stAlert { background-color: rgba(0, 242, 255, 0.1); border: 1px solid #00f2ff; color: #00f2ff; }
     .stButton>button { 
-        background-color: #00ffcc; color: black; 
-        border-radius: 20px; border: none;
-        font-weight: bold; width: 100%;
+        background: linear-gradient(45deg, #00f2ff, #0066ff); 
+        color: white; border-radius: 5px; border: none;
+        box-shadow: 0px 0px 15px #00f2ff; transition: 0.3s;
     }
-    .sdg-card {
-        background: rgba(0, 255, 204, 0.1);
-        padding: 20px; border-radius: 15px;
-        border: 1px solid #00ffcc;
+    .stButton>button:hover { transform: scale(1.05); box-shadow: 0px 0px 25px #00f2ff; }
+    .sdg-box {
+        padding: 15px; border-radius: 10px; border-left: 5px solid #00f2ff;
+        background: rgba(255, 255, 255, 0.05); margin-bottom: 10px;
     }
-    h1, h2, h3 { color: #00ffcc !important; }
     </style>
     """, unsafe_allow_input=True)
 
-# --- SIDEBAR: USER STATS ---
-st.sidebar.title("👤 User Profile")
-st.sidebar.markdown("### **Karma Points: 1,250**")
-st.sidebar.progress(75)
-st.sidebar.write("Goal: SDG 12 - Responsible Consumption")
+# --- APP LAYOUT ---
+st.title("🦾 POSTMORTEM AI")
+st.write("---")
 
-# --- MAIN INTERFACE ---
-st.title("📟 PostMortem AI")
-st.subheader("Digital Product Autopsy & Resurrection")
-
-col1, col2 = st.columns([1, 1])
+col1, col2 = st.columns([1, 1.2])
 
 with col1:
-    st.markdown("### 🔍 Scan Broken Product")
-    uploaded_file = st.file_uploader("Upload photo or video of failure", type=['png', 'jpg', 'jpeg', 'mp4'])
+    st.header("📸 Digital Autopsy")
+    img_file = st.file_uploader("Upload Image of Broken Product", type=['jpg', 'png', 'jpeg'])
     
-    if uploaded_file is not None:
-        image = Image.open(uploaded_file)
-        st.image(image, caption="Scanning for structural weaknesses...", use_container_width=True)
+    if img_file:
+        img = Image.open(img_file)
+        st.image(img, caption="Scanning Product Anatomy...", use_container_width=True)
         
-        if st.button("RUN AUTOPSY"):
-            with st.spinner('AI analyzing failure points...'):
-                time.sleep(2) # Simulating AI processing
-                st.success("Analysis Complete!")
-                st.session_state['analyzed'] = True
+        if st.button("🚀 INITIATE ANALYSIS"):
+            with st.spinner("Decoding failure patterns..."):
+                # AI PROMPT
+                prompt = """
+                Act as a master repair engineer and environmentalist. 
+                Analyze this image and provide:
+                1. Identification: What is this product?
+                2. Autopsy: Likely cause of failure.
+                3. Action: Can it be fixed? If not, what parts (copper, battery, etc.) can be harvested?
+                4. SDG Impact: How much CO2 is saved by not buying a new one?
+                Format as a professional report.
+                """
+                response = model.generate_content([prompt, img])
+                st.session_state['report'] = response.text
+                st.session_state['points'] = 150 # Simulated points
 
 with col2:
-    if 'analyzed' in st.session_state:
-        st.markdown("### 📋 Autopsy Report")
+    if 'report' in st.session_state:
+        st.header("📋 AI Diagnostic Report")
+        st.markdown(st.session_state['report'])
         
-        # Simulated Data Findings
-        st.error("Detected: Capacitor Leakage (Model: XRT-500)")
-        st.info("Repairability Score: 65%")
+        st.write("---")
+        st.header("🌍 SDG Impact Earned")
         
-        tab1, tab2, tab3 = st.tabs(["🔧 Repair", "♻️ Harvest", "📈 Manufacturer Data"])
-        
-        with tab1:
-            st.write("Manual Found: 'Toaster Power Circuitry'")
-            st.markdown("- Step 1: Unscrew bottom plate\n- Step 2: Desolder C14 capacitor")
-            if st.button("Claim +50 SDG Points for Repair"):
-                st.balloons()
-        
-        with tab2:
-            st.write("Valuable Components Detected:")
-            st.markdown("* **Copper Wiring** (99% Pure)\n* **Heating Element** (Salvageable)")
-            st.button("Locate Nearest Repair Cafe")
+        c1, c2 = st.columns(2)
+        with c1:
+            st.markdown(f"""
+                <div class="sdg-box">
+                    <h3>+{st.session_state['points']} Karma</h3>
+                    <p>SDG 12: Responsible Consumption</p>
+                </div>
+            """, unsafe_allow_input=True)
+        with c2:
+            st.markdown(f"""
+                <div class="sdg-box">
+                    <h3>0.5kg CO2 Saved</h3>
+                    <p>SDG 13: Climate Action</p>
+                </div>
+            """, unsafe_allow_input=True)
 
-        with tab3:
-            st.warning("⚠️ Manufacturer View (Locked)")
-            st.write("Common failure detected in 14% of units. Sending anonymized data to R&D.")
-
-# --- FOOTER: SDG TRACKER ---
-st.divider()
-st.markdown("### 🌍 Your Environmental Impact (SDG Tracker)")
-c1, c2, c3 = st.columns(3)
-with c1:
-    st.markdown('<div class="sdg-card"><b>SDG 12</b><br>12kg Waste Prevented</div>', unsafe_allow_input=True)
-with c2:
-    st.markdown('<div class="sdg-card"><b>SDG 13</b><br>45kg CO2 Offset</div>', unsafe_allow_input=True)
-with c3:
-    st.markdown('<div class="sdg-card"><b>SDG 9</b><br>2 Design Improvements Sent</div>', unsafe_allow_input=True)
+        if st.button("SEND DATA TO MANUFACTURER (+50 Bonus Points)"):
+            st.toast("Anonymized data sent to R&D. Design feedback loop closed!")
+            st.balloons()
+    else:
+        st.info("Upload an image and hit 'Initiate Analysis' to see the magic.")
